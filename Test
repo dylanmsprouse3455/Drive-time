@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leave Time Calculator</title>
+
+<style>
+  /* Global box sizing fix (important) */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: #f8fafc;
+    color: #0f172a;
+    padding: 20px;
+    max-width: 420px;
+    margin: auto;
+  }
+
+  h2 {
+    text-align: center;
+    margin-bottom: 24px;
+    font-weight: 700;
+  }
+
+  .card {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  }
+
+  .step {
+    display: none;
+  }
+
+  .step.active {
+    display: block;
+    animation: fadeIn 0.25s ease;
+  }
+
+  label {
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  input {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    margin-top: 10px;
+    border-radius: 12px;
+    border: 1px solid #cbd5f5;
+    outline: none;
+    background: #ffffff;
+  }
+
+  input:focus {
+    border-color: #3b82f6;
+  }
+
+  button {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    margin-top: 14px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    background: #3b82f6;
+    color: white;
+    font-weight: 600;
+  }
+
+  button.secondary {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+
+  .result {
+    font-size: 18px;
+    margin-top: 10px;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+
+  .checklist {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .checklist h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 15px;
+  }
+
+  .check-item input {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+
+<body>
+
+<h2>When Do I Need to Start?</h2>
+
+<div class="card">
+
+  <!-- STEP 1 -->
+  <div class="step active" id="step1">
+    <label>How long is the drive? (minutes)</label>
+    <input type="number" id="driveMinutes" min="0" placeholder="e.g. 25">
+    <button onclick="nextStep(2)">Next</button>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" id="step2">
+    <label>What time do you need to be there?</label>
+    <input type="time" id="arrivalTime">
+    <button onclick="nextStep(3)">Next</button>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" id="step3">
+    <label>Do you need a shower?</label>
+    <button onclick="calculate(false)">No</button>
+    <button class="secondary" onclick="calculate(true)">Yes</button>
+  </div>
+
+  <!-- RESULT -->
+  <div class="step" id="resultStep">
+    <div class="result" id="output"></div>
+
+    <div class="checklist">
+      <h3>Before You Leave</h3>
+
+      <div class="check-item">
+        <input type="checkbox">
+        <span>Take care of the dogs</span>
+      </div>
+
+      <div class="check-item">
+        <input type="checkbox">
+        <span>Put on deodorant</span>
+      </div>
+
+      <div class="check-item">
+        <input type="checkbox">
+        <span>Brush your teeth</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function nextStep(step) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + step)?.classList.add('active');
+  }
+
+  function timeToMinutes(t) {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function minutesTo12Hour(mins) {
+    mins = (mins + 1440) % 1440;
+    let h = Math.floor(mins / 60);
+    const m = mins % 60;
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    if (h === 0) h = 12;
+    return `${h}:${String(m).padStart(2, '0')} ${ampm}`;
+  }
+
+  function calculate(shower) {
+    const drive = Number(document.getElementById('driveMinutes').value);
+    const arrival = document.getElementById('arrivalTime').value;
+
+    if (!arrival || isNaN(drive)) return;
+
+    const BASE_NO_SHOWER = 35;
+    const BASE_WITH_SHOWER = 50;
+
+    const prepTime = shower ? BASE_WITH_SHOWER : BASE_NO_SHOWER;
+
+    const arrivalMins = timeToMinutes(arrival);
+    const leaveTime = arrivalMins - drive;
+    const startTime = leaveTime - prepTime;
+
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('resultStep').classList.add('active');
+
+    document.getElementById('output').innerHTML = `
+      Start getting ready by:<br>${minutesTo12Hour(startTime)}<br><br>
+      Leave the house by:<br>${minutesTo12Hour(leaveTime)}<br><br>
+      Prep time: ${prepTime} minutes<br>
+      Drive time: ${drive} minutes
+    `;
+  }
+</script>
+
+</body>
+</html>
